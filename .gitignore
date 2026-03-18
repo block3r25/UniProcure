@@ -14,6 +14,9 @@ manage_items.php
 saved_specs.php
 search_categories.php
 search_items.php
+dashboard.php
+profile.php
+toggle_wishlist.php
 
 # Logs
 *.log
@@ -30,6 +33,8 @@ Thumbs.db
 # Uploads (if sensitive)
 config/
 uploads/
+js/
+includes/
 
 # Temporary files
 *.tmp
