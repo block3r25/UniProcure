@@ -34,11 +34,20 @@ $showNotifications = $showNotifications ?? true;
         <h1 id="pageTitle"><?php echo htmlspecialchars($pageTitle); ?></h1>
     </div>
     <div class="header-actions">
-        <?php if ($showNotifications): ?>
-        <button class="btn-icon" id="notificationsBtn">
-            <i class="fas fa-bell"></i>
-            <span class="badge">3</span>
+        <button class="btn-icon" id="fullscreenBtn" title="Toggle Fullscreen">
+            <i class="fas fa-expand" id="fullscreenIcon"></i>
         </button>
-        <?php endif; ?>
     </div>
 </header>
+<script>
+document.getElementById('fullscreenBtn').addEventListener('click', function() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+});
+document.addEventListener('fullscreenchange', function() {
+    document.getElementById('fullscreenIcon').className = document.fullscreenElement ? 'fas fa-compress' : 'fas fa-expand';
+});
+</script>
