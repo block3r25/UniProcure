@@ -1,0 +1,36 @@
+# Environment files
+.env
+.env.*
+
+# Config files (VERY IMPORTANT)
+auth.php
+database.php
+sidebar.php
+login.php
+browse_items.php
+edit_profile.php
+manage_category.php
+manage_items.php
+saved_specs.php
+search_categories.php
+search_items.php
+
+# Logs
+*.log
+logs/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Uploads (if sensitive)
+config/
+uploads/
+
+# Temporary files
+*.tmp
+*.bak

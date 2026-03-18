@@ -1,11 +1,15 @@
 <?php
 session_start();
 
-// Redirect to login if not authenticated
-if (!isset($_SESSION['user'])) {
-    header('Location: login.php');
-    exit;
-}
+// Load database and auth helpers
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/config/auth.php';
+
+// Require login
+requireLogin();
+
+// Get current user
+$user = getCurrentUser();
 
 // Demo items data (in production, fetch from database)
 $items = [
@@ -52,119 +56,48 @@ $items = [
 ];
 
 $categories = ['Computing', 'Office Equipment', 'Networking', 'Audio Visual', 'Laboratory Equipment', 'Furniture', 'Other'];
+
+// Template parameters
+$activePage = 'dashboard';
+$pageTitle = 'Dashboard';
+$inlineScript = "const itemsData = " . json_encode($items) . ";
+const userRole = '" . getRoleName($user['role']) . "';";
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - University Procurement Portal</title>
+    <title><?php echo htmlspecialchars($pageTitle); ?> - University Procurement Portal</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="dashboard-page">
     <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo-small">
-                <i class="fas fa-university"></i>
-            </div>
-            <span>UniProcure</span>
-        </div>
-        <nav class="sidebar-nav">
-            <a href="#" class="nav-item active" data-page="dashboard">
-                <i class="fas fa-home"></i>
-                <span>Dashboard</span>
-            </a>
-            <?php if ($_SESSION['user']['role'] === 'twg'): ?>
-            <a href="#" class="nav-item" data-page="upload">
-                <i class="fas fa-upload"></i>
-                <span>Upload Specs</span>
-            </a>
-            <a href="#" class="nav-item" data-page="manage">
-                <i class="fas fa-cog"></i>
-                <span>Manage Items</span>
-            </a>
-            <?php endif; ?>
-            <?php if ($_SESSION['user']['role'] === 'user'): ?>
-            <a href="#" class="nav-item" data-page="browse">
-                <i class="fas fa-search"></i>
-                <span>Browse Items</span>
-            </a>
-            <a href="#" class="nav-item" data-page="saved">
-                <i class="fas fa-bookmark"></i>
-                <span>Saved Specs</span>
-            </a>
-            <?php endif; ?>
-            <div class="nav-divider"></div>
-            <a href="#" class="nav-item" data-page="profile">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
-            </a>
-            <a href="#" class="nav-item" data-page="settings">
-                <i class="fas fa-cog"></i>
-                <span>Settings</span>
-            </a>
-        </nav>
-        <div class="sidebar-footer">
-            <div class="user-info">
-                <div class="user-avatar">
-                    <i class="fas fa-user-circle"></i>
-                </div>
-                <div class="user-details">
-                    <span class="user-name"><?php echo htmlspecialchars($_SESSION['user']['name']); ?></span>
-                    <span class="user-role"><?php echo $_SESSION['user']['role'] === 'twg' ? 'Technical Working Group' : 'End User'; ?></span>
-                </div>
-            </div>
-            <a href="logout.php" class="logout-btn">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
-            </a>
-        </div>
-    </aside>
+    <?php require_once __DIR__ . '/includes/sidebar.php'; ?>
 
     <!-- Main Content -->
     <main class="main-content">
         <!-- Header -->
-        <header class="top-header">
-            <button class="menu-toggle" id="menuToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-            <div class="header-title">
-                <nav class="breadcrumb">
-                    <a href="index.php">Home</a>
-                    <i class="fas fa-chevron-right"></i>
-                    <span>Dashboard</span>
-                </nav>
-                <h1 id="pageTitle">Dashboard</h1>
-            </div>
-            <div class="header-actions">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Search items...">
-                </div>
-                <button class="btn-icon" id="notificationsBtn">
-                    <i class="fas fa-bell"></i>
-                    <span class="badge">3</span>
-                </button>
-            </div>
-        </header>
+        <?php require_once __DIR__ . '/includes/header.php'; ?>
 
         <!-- Dashboard Content -->
         <div class="content-area">
             <!-- Welcome Banner -->
             <div class="welcome-banner">
                 <div class="welcome-content">
-                    <h2>Welcome back, <?php echo htmlspecialchars(explode(' ', $_SESSION['user']['name'])[0]); ?>!</h2>
+                    <h2>Welcome back, <?php echo htmlspecialchars(explode(' ', $user['fullname'])[0]); ?>!</h2>
                     <p>
-                        <?php if ($_SESSION['user']['role'] === 'twg'): ?>
+                        <?php if ($user['role'] === ROLE_ADMIN): ?>
+                        Full access to manage technical specifications, approve requests, and browse all items.
+                        <?php elseif ($user['role'] === ROLE_TWG): ?>
                         Manage technical specifications and approve procurement requests.
                         <?php else: ?>
                         Browse and copy technical specifications for your procurement needs.
                         <?php endif; ?>
                     </p>
                 </div>
-                <?php if ($_SESSION['user']['role'] === 'twg'): ?>
+                <?php if (hasRole([ROLE_TWG, ROLE_ADMIN])): ?>
                 <button class="btn btn-primary" id="uploadBannerBtn">
                     <i class="fas fa-plus"></i> Upload New Specs
                 </button>
@@ -182,7 +115,44 @@ $categories = ['Computing', 'Office Equipment', 'Networking', 'Audio Visual', 'L
                         <p>Total Items</p>
                     </div>
                 </div>
-                <?php if ($_SESSION['user']['role'] === 'twg'): ?>
+                <?php if ($user['role'] === ROLE_ADMIN): ?>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-green">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>12</h3>
+                        <p>Approved Specs</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-orange">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>5</h3>
+                        <p>Pending Review</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-purple">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3><?php echo count($categories); ?></h3>
+                        <p>Categories</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-teal">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>24</h3>
+                        <p>Active Users</p>
+                    </div>
+                </div>
+                <?php elseif ($user['role'] === ROLE_TWG): ?>
                 <div class="stat-card">
                     <div class="stat-icon stat-icon-green">
                         <i class="fas fa-check-circle"></i>
@@ -256,7 +226,7 @@ $categories = ['Computing', 'Office Equipment', 'Networking', 'Audio Visual', 'L
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <?php if ($_SESSION['user']['role'] === 'twg'): ?>
+                            <?php if ($user['role'] === ROLE_TWG): ?>
                             <button class="btn btn-primary btn-sm" id="uploadBtn">
                                 <i class="fas fa-plus"></i> Upload New
                             </button>
@@ -293,7 +263,7 @@ $categories = ['Computing', 'Office Equipment', 'Networking', 'Audio Visual', 'L
                                             <button class="btn-icon btn-view" data-id="<?php echo $item['id']; ?>" title="View Specs">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-                                            <?php if ($_SESSION['user']['role'] === 'user'): ?>
+                                            <?php if ($user['role'] === ROLE_USER): ?>
                                             <button class="btn-icon btn-copy" data-id="<?php echo $item['id']; ?>" title="Copy Specs">
                                                 <i class="fas fa-copy"></i>
                                             </button>
@@ -301,7 +271,7 @@ $categories = ['Computing', 'Office Equipment', 'Networking', 'Audio Visual', 'L
                                                 <i class="far fa-bookmark"></i>
                                             </button>
                                             <?php endif; ?>
-                                            <?php if ($_SESSION['user']['role'] === 'twg'): ?>
+                                            <?php if ($user['role'] === ROLE_TWG): ?>
                                             <button class="btn-icon btn-edit" data-id="<?php echo $item['id']; ?>" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </button>
@@ -391,7 +361,7 @@ $categories = ['Computing', 'Office Equipment', 'Networking', 'Audio Visual', 'L
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="closeModalBtn">Close</button>
-                <?php if ($_SESSION['user']['role'] === 'user'): ?>
+                <?php if ($user['role'] === ROLE_USER): ?>
                 <button class="btn btn-primary" id="copySpecsBtn">
                     <i class="fas fa-copy"></i> Copy Specifications
                 </button>
@@ -459,8 +429,7 @@ $categories = ['Computing', 'Office Equipment', 'Networking', 'Audio Visual', 'L
     <script src="js/app.js"></script>
     <script src="js/dashboard.js"></script>
     <script>
-        const itemsData = <?php echo json_encode($items); ?>;
-        const userRole = '<?php echo $_SESSION['user']['role']; ?>';
+        <?php echo $inlineScript; ?>
     </script>
 </body>
 </html>

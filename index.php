@@ -243,30 +243,26 @@ if (isset($_SESSION['user'])) {
     <!-- Footer -->
     <footer class="landing-footer">
         <div class="footer-container">
-            <div class="footer-brand">
+            <div class="footer-section footer-brand">
                 <div class="footer-logo">
                     <i class="fas fa-university"></i>
                     <span>UniProcure</span>
                 </div>
-                <p>University Procurement Portal - Streamlining technical specifications management.</p>
+                <p>University Procurement Portal - Streamlining technical specifications management for all departments.</p>
             </div>
-            <div class="footer-links">
-                <div class="footer-links-group">
-                    <h4>Quick Links</h4>
-                    <a href="#features">Features</a>
-                    <a href="#how-it-works">How It Works</a>
-                    <a href="#">About</a>
-                    <a href="#">Contact</a>
-                </div>
-                <div class="footer-links-group">
-                    <h4>Support</h4>
-                    <a href="#">Help Center</a>
-                    <a href="#">Documentation</a>
-                    <a href="#">FAQ</a>
-                    <a href="#">Report Issue</a>
-                </div>
-                <div class="footer-links-group">
-                    <h4>Contact</h4>
+            <div class="footer-section footer-links-group">
+                <h4>Quick Links</h4>
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#">About Us</a>
+                <a href="#">Contact</a>
+            </div>
+            <div class="footer-section footer-links-group">
+                <h4>Support</h4>
+                <a href="#">Help Center</a>
+                <a href="#">Documentation</a>
+                <a href="#">FAQ</a>
+                <div class="footer-contact">
                     <p><i class="fas fa-envelope"></i> procurement@university.edu</p>
                     <p><i class="fas fa-phone"></i> +1 234 567 890</p>
                 </div>

@@ -66,8 +66,11 @@ function setupEventListeners() {
     // Navigation items
     Elements.navItems.forEach(item => {
         item.addEventListener('click', (e) => {
-            e.preventDefault();
-            handleNavigation(item);
+            // Only prevent default if href is '#'
+            if (item.getAttribute('href') === '#') {
+                e.preventDefault();
+                handleNavigation(item);
+            }
         });
     });
 
